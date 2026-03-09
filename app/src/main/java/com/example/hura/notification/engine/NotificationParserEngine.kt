@@ -1,6 +1,5 @@
 package com.example.hura.notification.engine
 
-import com.example.hura.data.repository.TransactionRepository
 import com.example.hura.notification.model.RawNotification
 import com.example.hura.notification.parser.NLBNotificationParser
 import com.example.hura.notification.parser.NotificationParser

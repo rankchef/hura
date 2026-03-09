@@ -30,12 +30,13 @@ class TestNotificationParser : NotificationParser {
             .substringAfter("na prodazno mesto", "")
             .substringBefore(".")
             .trim()
-            .ifEmpty { null }
+            .ifEmpty { return null }
 
         return ParsedTransaction(
             amount = rawAmount,
             currency = currency,
             timestamp = notification.timestamp,
+            bankName = "Test",
             type = type,
             merchant = merchant,
             sourcePackage = notification.packageName,

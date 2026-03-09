@@ -3,6 +3,8 @@ package com.example.hura
 import android.app.Application
 import androidx.room.Room
 import com.example.hura.data.local.AppDatabase
+import com.example.hura.data.repository.RoomCategoryRepository
+import com.example.hura.data.repository.RoomMerchantRepository
 import com.example.hura.data.repository.RoomTransactionRepository
 import com.example.hura.data.repository.TransactionRepository
 class HuraApplication : Application() {
@@ -11,10 +13,24 @@ class HuraApplication : Application() {
             applicationContext,
             AppDatabase::class.java,
             "hura_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(true)
+            .build()
+    }
+
+
+    val merchantRepository by lazy {
+        RoomMerchantRepository(database.merchantDao())
+    }
+
+    val categoryRepository by lazy {
+        RoomCategoryRepository(database.categoryDao())
     }
 
     val transactionRepository: TransactionRepository by lazy {
-        RoomTransactionRepository(database.transactionDao())
+        RoomTransactionRepository(
+            transactionDao = database.transactionDao(),
+            merchantRepository = merchantRepository
+        )
     }
 }

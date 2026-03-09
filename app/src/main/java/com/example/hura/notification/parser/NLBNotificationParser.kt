@@ -30,11 +30,12 @@ class NLBNotificationParser : NotificationParser {
             .substringAfter("na prodazno mesto", "")
             .substringBefore(".")
             .trim()
-            .ifEmpty { null }
+            .ifEmpty { return null }
 
         return ParsedTransaction(
             amount = rawAmount,
             currency = currency,
+            bankName = "NLB",
             timestamp = notification.timestamp,
             type = type,
             merchant = merchant,

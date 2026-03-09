@@ -1,49 +1,68 @@
 package com.example.hura.data.repository
 
-import com.example.hura.data.local.TransactionDao
-import com.example.hura.data.local.TransactionEntity
+import TransactionWithMerchantAndCategory
+import com.example.hura.data.local.dao.TransactionDao
+import com.example.hura.data.local.entity.TransactionEntity
 import com.example.hura.domain.model.ParsedTransaction
 import com.example.hura.domain.model.TransactionType
+import com.example.hura.domain.model.TransactionView
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.math.BigDecimal
 import java.time.Instant
 
 class RoomTransactionRepository(
-   private val dao: TransactionDao
+   private val transactionDao: TransactionDao,
+   private val merchantRepository: MerchantRepository
 ) : TransactionRepository {
 
     override suspend fun insert(transaction: ParsedTransaction) {
-        dao.insert(transaction.toEntity())
+        val entity = TransactionEntity(
+            amount = transaction.amount.toPlainString(),
+            currency = transaction.currency,
+            notificationKey = transaction.notificationKey,
+            bankName = transaction.bankName,
+            timestamp = transaction.timestamp.toEpochMilli(),
+            type = transaction.type.name,
+            merchantId =  merchantRepository.getOrInsert(transaction.merchant).id
+            )
+
+        transactionDao.insert(entity)
     }
 
-    override fun observeAll(): Flow<List<ParsedTransaction>> {
-        return dao.observeAll()
-            .map { entities ->
-                entities.map { it.toDomain() }
+    override fun observeAll(): Flow<List<TransactionEntity>> {
+        return transactionDao.observeAll()
+    }
+
+    override fun observeAllWithDeleted(): Flow<List<TransactionEntity>> {
+        return transactionDao.observeAllWithDeleted()
+    }
+
+    override suspend fun softDelete(transactionId: Long) {
+        transactionDao.softDelete(transactionId)
+    }
+
+    override fun observeAllView(): Flow<List<TransactionView>> {
+        return transactionDao.observeAllView().map { list ->
+            list.map { relation ->
+                relation.toView()
             }
+        }
     }
-}
 
-private fun ParsedTransaction.toEntity(): TransactionEntity {
-    return TransactionEntity(
-        amount = amount.toPlainString(),
-        currency = currency,
-        timestamp = timestamp.toEpochMilli(),
-        type = type.name,
-        merchant = merchant ?: "",
-        notificationKey = notificationKey
-    )
-}
-
-private fun TransactionEntity.toDomain(): ParsedTransaction {
-    return ParsedTransaction(
-        amount = BigDecimal(amount),
-        currency = currency,
-        timestamp = Instant.ofEpochMilli(timestamp),
-        type = TransactionType.valueOf(type),
-        merchant = merchant.ifBlank { null },
-        sourcePackage = "",
-        notificationKey = notificationKey
-    )
+    private fun TransactionWithMerchantAndCategory.toView(): TransactionView {
+        return TransactionView(
+            id = transaction_id,
+            amount = BigDecimal(amount),
+            timestamp = Instant.ofEpochMilli(timestamp),
+            currency = currency,
+            type = TransactionType.valueOf(type),
+            bankName = bankName,
+            merchantId = merchant_id,
+            merchantName = merchant_nickname ?: merchant_rawName,
+            categoryId = category_id,
+            categoryName = category_name,
+            categoryIconId = category_iconId
+        )
+    }
 }
