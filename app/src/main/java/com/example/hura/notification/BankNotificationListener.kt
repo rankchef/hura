@@ -40,6 +40,7 @@ class BankNotificationListener : NotificationListenerService() {
                 }
                 EngineResult.NotSupported -> Log.d("NOTIF_DEBUG", "Notification not supported")
                 EngineResult.ParseFailed -> Log.d("NOTIF_DEBUG", "Failed to parse notification")
+                EngineResult.UnsupportedCurrency -> Log.d("NOTIF_DEBUG", "Currency in notification not supported")
             }
         }
     }

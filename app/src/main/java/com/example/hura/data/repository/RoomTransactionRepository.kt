@@ -2,7 +2,9 @@ package com.example.hura.data.repository
 
 import TransactionWithMerchantAndCategory
 import com.example.hura.data.local.dao.TransactionDao
+import com.example.hura.data.local.entity.TransactionCurrencyEntity
 import com.example.hura.data.local.entity.TransactionEntity
+import com.example.hura.domain.currency.CurrencyConverter
 import com.example.hura.domain.model.ParsedTransaction
 import com.example.hura.domain.model.TransactionType
 import com.example.hura.domain.model.TransactionView
@@ -13,21 +15,48 @@ import java.time.Instant
 
 class RoomTransactionRepository(
    private val transactionDao: TransactionDao,
-   private val merchantRepository: MerchantRepository
+   private val merchantRepository: MerchantRepository,
+   private val exchangeRateRepository: ExchangeRateRepository,
+   private val transactionCurrencyRepository: TransactionCurrencyRepository
 ) : TransactionRepository {
 
     override suspend fun insert(transaction: ParsedTransaction) {
+        //Insert the transaction itself
         val entity = TransactionEntity(
             amount = transaction.amount.toPlainString(),
-            currency = transaction.currency,
+            currency = transaction.currency.uppercase(),
             notificationKey = transaction.notificationKey,
             bankName = transaction.bankName,
             timestamp = transaction.timestamp.toEpochMilli(),
             type = transaction.type.name,
-            merchantId =  merchantRepository.getOrInsert(transaction.merchant).id
-            )
+            merchantId = merchantRepository.getOrInsert(transaction.merchant).id
+        )
 
         transactionDao.insert(entity)
+
+        //Get latest EUR-based rates
+        val eurRates = exchangeRateRepository.getLatestRates()
+            .mapValues { (_, rateEntity) -> rateEntity.rateToEur.toBigDecimal() }
+
+        //Build one TransactionCurrencyEntity per supported currency
+        val currencyEntries = eurRates.map { (currencyCode, rateToEur) ->
+            val convertedAmount = CurrencyConverter.convert(
+                amount = transaction.amount,
+                fromCurrency = transaction.currency,
+                toCurrency = currencyCode,
+                eurRates = eurRates
+            )
+
+            TransactionCurrencyEntity(
+                transactionId = entity.id.toString(),
+                currency = currencyCode.uppercase(),
+                price = convertedAmount.toPlainString(),
+                timestamp = transaction.timestamp.toEpochMilli()
+            )
+        }
+
+        //Insert all converted currency rows
+        transactionCurrencyRepository.insertTransactionCurrencies(currencyEntries)
     }
 
     override fun observeAll(): Flow<List<TransactionEntity>> {

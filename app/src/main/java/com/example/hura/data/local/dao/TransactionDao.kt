@@ -44,6 +44,8 @@ interface TransactionDao {
     FROM transactions t
     LEFT JOIN merchants m ON t.merchantId = m.id
     LEFT JOIN categories c ON m.categoryId = c.id
-""")
+    WHERE t.isDeleted = 0
+    ORDER BY t.timestamp DESC
+    """)
     fun observeAllView(): Flow<List<TransactionWithMerchantAndCategory>>
 }

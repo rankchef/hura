@@ -1,4 +1,7 @@
 package com.example.hura.ui.transaction
 
-class TransactionUiState {
-}
+import com.example.hura.domain.model.TransactionView
+
+data class TransactionsUiState(
+    val transactions: List<TransactionView> = emptyList()
+)

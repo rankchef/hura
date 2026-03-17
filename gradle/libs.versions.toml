@@ -30,6 +30,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 lifecycle-viewmodel-compose = "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2"
+androidx-compose-ui-text-google-fonts = "androidx.compose.ui:ui-text-google-fonts:1.7.8"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

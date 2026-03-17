@@ -3,20 +3,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.hura.R
 import com.example.hura.domain.model.TransactionType
 import com.example.hura.domain.model.TransactionView
@@ -25,7 +24,6 @@ import com.example.hura.ui.theme.Elevation
 import com.example.hura.ui.theme.IconSizes
 import com.example.hura.ui.theme.Shapes
 import com.example.hura.ui.theme.Spacing
-import com.example.hura.ui.theme.extendedColors
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -41,14 +39,12 @@ fun TransactionCard(
     onCategoryClick: (TransactionView) -> Unit,
     onDelete: (TransactionView) -> Unit
 ) {
-
     val dateText = transaction.timestamp
         .atZone(ZoneId.systemDefault())
-        .toLocalDate()
-        .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+        .toLocalDateTime()
+        .format(DateTimeFormatter.ofPattern("MMM dd, h:mm a"))
 
     val categoryName = transaction.categoryName ?: "Uncategorized"
-
     val categoryIconRes = transaction.categoryIconId ?: R.drawable.support
 
     val dismissState = rememberSwipeToDismissBoxState(
@@ -64,7 +60,6 @@ fun TransactionCard(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-
             val color = when (dismissState.dismissDirection) {
                 SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
                 else -> Color.Transparent
@@ -81,117 +76,124 @@ fun TransactionCard(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.onErrorContainer
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(IconSizes.medium)
                 )
             }
         }
     ) {
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onCardClick(transaction) },
             shape = Shapes.large,
-            elevation = CardDefaults.cardElevation(defaultElevation = Elevation.level1)
+            elevation = CardDefaults.cardElevation(defaultElevation = Elevation.level1),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
-
             Row(
                 modifier = Modifier
                     .padding(Spacing.md)
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    modifier = Modifier.weight(1f)
+                // Category Icon Container
+                Box(
+                    modifier = Modifier
+                        .size(48.dp) // Maintain outer container size for touch target
+                        .background(MaterialTheme.colorScheme.primaryContainer, shape = CircleShape)
+                        .clickable { onCategoryClick(transaction) },
+                    contentAlignment = Alignment.Center
                 ) {
-
-                    Text(
-                        text = "${if (transaction.type == TransactionType.EXPENSE) "-" else ""}${transaction.amount.setScale(2, RoundingMode.HALF_UP)} ${transaction.currency}",
-                        style = AppTypography.headlineMedium,
-                        color = if (transaction.type == TransactionType.INCOME)
-                            MaterialTheme.extendedColors.income.color
-                        else
-                            MaterialTheme.extendedColors.expense.color,
-                        letterSpacing = (-0.5).sp
+                    Icon(
+                        painter = painterResource(id = categoryIconRes),
+                        contentDescription = categoryName,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(IconSizes.large)
                     )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                        modifier = Modifier.clickable {
-                            onMerchantClick(transaction)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Storefront,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(IconSizes.medium)
-                        )
-
-                        Text(
-                            text = transaction.merchantName,
-                            style = AppTypography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountBalance,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(IconSizes.medium)
-                        )
-
-                        Text(
-                            text = transaction.bankName,
-                            style = AppTypography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
 
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-                    modifier = Modifier.clickable {
-                        onCategoryClick(transaction)
-                    }
+                    modifier = Modifier.weight(1f)
                 ) {
-
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
-                            .padding(2.dp),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Icon(
-                            painter = painterResource(id = categoryIconRes),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(32.dp)
+                        Text(
+                            text = transaction.merchantName,
+                            style = AppTypography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onMerchantClick(transaction) }
+                                .padding(end = Spacing.sm)
+                        )
+
+                        Text(
+                            text = buildAnnotatedString {
+                                val amountPrefix = if (transaction.type == TransactionType.EXPENSE) "-" else ""
+                                val amountValue = transaction.amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
+
+                                withStyle(style = AppTypography.titleMedium.toSpanStyle()) {
+                                    append("$amountPrefix$amountValue ")
+                                }
+                                withStyle(style = AppTypography.labelSmall.toSpanStyle()) {
+                                    append(transaction.currency.uppercase())
+                                }
+                            },
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
                         )
                     }
 
-                    Text(
-                        text = categoryName,
-                        style = AppTypography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.xs),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = Spacing.sm)
+                        ) {
+                            val typeString = transaction.type.name.lowercase().replaceFirstChar { it.uppercase() }
 
-                    Text(
-                        text = dateText,
-                        style = AppTypography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                            Text(
+                                text = "${transaction.bankName} • $typeString",
+                                style = AppTypography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Text(
+                                text = categoryName,
+                                style = AppTypography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .padding(top = Spacing.xs)
+                                    .clickable { onCategoryClick(transaction) }
+                            )
+                        }
+
+                        Text(
+                            text = dateText,
+                            style = AppTypography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
@@ -204,15 +206,15 @@ fun CardPreview() {
 
     val transactionView = TransactionView(
         id = 0,
-        amount = BigDecimal(612.00),
-        currency = "EUR",
+        amount = BigDecimal(15.50),
+        currency = "USD",
         type = TransactionType.EXPENSE,
         timestamp = Instant.now(),
-        bankName = "Swedbank",
+        bankName = "Chase Bank",
         merchantId = 0,
-        merchantName = "Skims",
+        merchantName = "Starbucks",
         categoryId = null,
-        categoryName = null,
+        categoryName = "Food & Drink",
         categoryIconId = null
     )
 

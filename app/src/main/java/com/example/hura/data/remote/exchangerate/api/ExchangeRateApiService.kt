@@ -1,4 +1,7 @@
-package com.example.hura.data.remote.api
+package com.example.hura.data.remote.exchangerate.api
+
+import com.example.hura.data.remote.exchangerate.model.ExchangeRateResponse
+import retrofit2.http.GET
 
 interface ExchangeRateApiService {
 

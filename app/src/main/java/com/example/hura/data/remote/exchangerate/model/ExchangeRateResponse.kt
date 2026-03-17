@@ -1,4 +1,4 @@
-package com.example.hura.data.remote.model
+package com.example.hura.data.remote.exchangerate.model
 
 data class ExchangeRateResponse(
     val result: String,
