@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
-    suspend fun insert(transaction: TransactionEntity)
+    suspend fun insert(transaction: TransactionEntity): Long
 
     @Query("UPDATE transactions SET isDeleted = 1 WHERE id = :id")
     suspend fun softDelete(id: Long)
@@ -48,4 +48,34 @@ interface TransactionDao {
     ORDER BY t.timestamp DESC
     """)
     fun observeAllView(): Flow<List<TransactionWithMerchantAndCategory>>
+
+    @Transaction
+    @Query("""
+SELECT t.id AS transaction_id,
+       t.amount,
+       t.currency,
+       t.merchantId,
+       t.bankName,
+       t.timestamp,
+       t.notificationKey,
+       t.type,
+       t.isDeleted,
+       m.id AS merchant_id,
+       m.rawName AS merchant_rawName,
+       m.nickname AS merchant_nickname,
+       m.categoryId AS merchant_categoryId,
+       c.id AS category_id,
+       c.name AS category_name,
+       c.iconId AS category_iconId,
+       tc.price AS exchangeAmount,
+       tc.currency AS exchangeCurrency
+FROM transactions t
+LEFT JOIN merchants m ON t.merchantId = m.id
+LEFT JOIN categories c ON m.categoryId = c.id
+-- Changed to INNER JOIN: only returns rows where a conversion exists
+INNER JOIN transaction_currencies tc ON t.id = tc.transactionId AND tc.currency = :targetCurrency
+WHERE t.isDeleted = 0
+ORDER BY t.timestamp DESC
+""")
+    fun observeAllViewWithCurrency(targetCurrency: String): Flow<List<TransactionWithMerchantAndCategory>>
 }

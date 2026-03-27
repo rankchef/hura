@@ -1,3 +1,5 @@
+package com.example.hura.ui.transaction.components
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -6,24 +8,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hura.R
 import com.example.hura.domain.model.TransactionType
-import com.example.hura.domain.model.TransactionView
-import com.example.hura.ui.theme.AppTypography
-import com.example.hura.ui.theme.Elevation
-import com.example.hura.ui.theme.IconSizes
-import com.example.hura.ui.theme.Shapes
-import com.example.hura.ui.theme.Spacing
+import com.example.hura.ui.category.CategoryItem
+import com.example.hura.ui.theme.*
+import com.example.hura.ui.transaction.TransactionView
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -37,7 +35,8 @@ fun TransactionCard(
     onCardClick: (TransactionView) -> Unit,
     onMerchantClick: (TransactionView) -> Unit,
     onCategoryClick: (TransactionView) -> Unit,
-    onDelete: (TransactionView) -> Unit
+    onDelete: (TransactionView) -> Unit,
+    modifier: Modifier = Modifier // Added Modifier parameter
 ) {
     val dateText = transaction.timestamp
         .atZone(ZoneId.systemDefault())
@@ -45,7 +44,6 @@ fun TransactionCard(
         .format(DateTimeFormatter.ofPattern("MMM dd, h:mm a"))
 
     val categoryName = transaction.categoryName ?: "Uncategorized"
-    val categoryIconRes = transaction.categoryIconId ?: R.drawable.support
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -56,8 +54,13 @@ fun TransactionCard(
         }
     )
 
+    LaunchedEffect(transaction.id) {
+        dismissState.reset()
+    }
+
     SwipeToDismissBox(
         state = dismissState,
+        modifier = modifier, // Applied modifier here to control the whole component's layout
         enableDismissFromStartToEnd = false,
         backgroundContent = {
             val color = when (dismissState.dismissDirection) {
@@ -103,16 +106,18 @@ fun TransactionCard(
                 // Category Icon Container
                 Box(
                     modifier = Modifier
-                        .size(48.dp) // Maintain outer container size for touch target
+                        .size(48.dp)
                         .background(MaterialTheme.colorScheme.primaryContainer, shape = CircleShape)
                         .clickable { onCategoryClick(transaction) },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painter = painterResource(id = categoryIconRes),
-                        contentDescription = categoryName,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(IconSizes.large)
+                    CategoryItem(
+                        iconRes = transaction.categoryIconId,
+                        isSelected = false,
+                        shape = CircleShape,
+                        backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                        iconTint = MaterialTheme.colorScheme.primary,
+                        onClick = { onCategoryClick(transaction) }
                     )
                 }
 
@@ -200,13 +205,12 @@ fun TransactionCard(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun CardPreview() {
-
     val transactionView = TransactionView(
         id = 0,
-        amount = BigDecimal(15.50),
+        amount = BigDecimal("15.50"),
         currency = "USD",
         type = TransactionType.EXPENSE,
         timestamp = Instant.now(),
@@ -218,11 +222,14 @@ fun CardPreview() {
         categoryIconId = null
     )
 
-    TransactionCard(
-        transactionView,
-        onCardClick = {},
-        onCategoryClick = {},
-        onMerchantClick = {},
-        onDelete = {}
-    )
+    HuraTheme {
+        TransactionCard(
+            transaction = transactionView,
+            onCardClick = {},
+            onCategoryClick = {},
+            onMerchantClick = {},
+            onDelete = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }

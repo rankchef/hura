@@ -2,6 +2,7 @@ package com.example.hura.data.repository
 
 import com.example.hura.data.local.dao.CategoryDao
 import com.example.hura.data.local.entity.CategoryEntity
+import com.example.hura.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.Flow
 
 class RoomCategoryRepository(

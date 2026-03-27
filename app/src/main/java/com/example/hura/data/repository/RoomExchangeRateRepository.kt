@@ -4,6 +4,7 @@ import com.example.hura.data.local.dao.ExchangeRateDao
 import com.example.hura.data.local.entity.ExchangeRateEntity
 import com.example.hura.data.remote.exchangerate.api.ExchangeRateApiClient
 import com.example.hura.domain.currency.FallbackExchangeRates
+import com.example.hura.domain.repository.ExchangeRateRepository
 import java.time.Instant
 
 class RoomExchangeRateRepository(

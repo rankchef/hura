@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.hura.data.local.entity.TransactionCurrencyEntity
-import com.example.hura.data.local.entity.TransactionEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionCurrencyDao {
@@ -19,8 +19,18 @@ interface TransactionCurrencyDao {
         WHERE tc.currency = :currency
           AND t.isDeleted = 0
     """)
-    suspend fun getAllTransactionsInCurrency(currency: String): List<TransactionCurrencyEntity>
+    fun getAllTransactionsInCurrency(currency: String): Flow<List<TransactionCurrencyEntity>>
+
+
+    @Query("""
+        SELECT tc.* FROM transaction_currencies AS tc
+        INNER JOIN transactions AS t ON t.id = tc.transactionId
+        WHERE t.merchantId = :merchantId 
+          AND tc.currency = :currency
+          AND t.isDeleted = 0
+    """)
+    fun getTransactionsByMerchantAndCurrency(merchantId: Long, currency: String): Flow<List<TransactionCurrencyEntity>>
 
     @Query("SELECT * FROM transaction_currencies WHERE transactionId = :transactionId")
-    suspend fun getByTransactionId(transactionId: String): List<TransactionCurrencyEntity>
+    fun getByTransactionId(transactionId: Long): Flow<List<TransactionCurrencyEntity>>
 }

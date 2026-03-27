@@ -23,5 +23,8 @@ data class TransactionWithMerchantAndCategory(
 
     val category_id: Long?,
     val category_name: String?,
-    val category_iconId: Int?
+    val category_iconId: Int?,
+
+    val exchangeAmount: String?,
+    val exchangeCurrency: String?
 )

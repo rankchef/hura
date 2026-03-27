@@ -15,7 +15,7 @@ import com.example.hura.data.repository.RoomExchangeRateRepository
 import com.example.hura.data.repository.RoomMerchantRepository
 import com.example.hura.data.repository.RoomTransactionCurrencyRepository
 import com.example.hura.data.repository.RoomTransactionRepository
-import com.example.hura.data.repository.TransactionRepository
+import com.example.hura.domain.repository.TransactionRepository
 import com.example.hura.worker.ExchangeRateWorker
 import java.util.concurrent.TimeUnit
 
@@ -39,11 +39,11 @@ class HuraApplication : Application() {
     }
 
     val exchangeRateRepository by lazy {
-        RoomExchangeRateRepository(database.exchangeRateDao()) // new
+        RoomExchangeRateRepository(database.exchangeRateDao())
     }
 
     val transactionCurrencyRepository by lazy {
-        RoomTransactionCurrencyRepository(database.transactionCurrencyDao()) // new
+        RoomTransactionCurrencyRepository(database.transactionCurrencyDao())
     }
 
     val transactionRepository: TransactionRepository by lazy {

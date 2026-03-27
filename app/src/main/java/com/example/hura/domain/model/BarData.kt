@@ -1,4 +1,9 @@
 package com.example.hura.domain.model
 
-class BarData {
-}
+import java.time.LocalDate
+
+data class BarData(
+    val label: String,
+    val value: Double,
+    val fullDate: LocalDate
+)

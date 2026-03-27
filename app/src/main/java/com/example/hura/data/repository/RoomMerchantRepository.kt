@@ -2,6 +2,7 @@ package com.example.hura.data.repository
 
 import com.example.hura.data.local.dao.MerchantDao
 import com.example.hura.data.local.entity.MerchantEntity
+import com.example.hura.domain.repository.MerchantRepository
 
 class RoomMerchantRepository (
     private val dao: MerchantDao
